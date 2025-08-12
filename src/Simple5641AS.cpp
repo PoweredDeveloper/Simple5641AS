@@ -12,18 +12,43 @@ Simple5641AS::Simple5641AS(const uint8_t * segmentPins, const uint8_t * digitSel
     for (int i = 0; i < sizeof(_digitSelectionPins); i++) digitalWrite(_digitSelectionPins[i], LOW);
 }
 
-// Clean number to 4-deciminals
-int Simple5641AS::cleanNumber(int number) {
-    while (number >= 10000) number /= 10;
-    return number;
+// Get code from character
+uint8_t Simple5641AS::getCode(char c) {
+    if (c >= 'a' && c <= 'z') c = toupper(c);
+    for (int d = 0; d < sizeof(segmentCodes) / sizeof(segmentCodes[0]); d++) {
+        if (segmentCodes[d].letter == c) return segmentCodes[d].code;
+    }
+
+    return segmentCodes[0].code;
 }
 
-// Clean words to 4-letters
-char* Simple5641AS::cleanWord(char* word) {
-    static char buffer[5];
-    strncpy(buffer, word, 4);
-    word[4] = '\0';
-    return buffer;
+// Get code from number
+uint8_t Simple5641AS::getCode(int n) {
+    n = abs(n);
+    while (n >= 10) n /= 10;
+    const char new_n = (char)(n + '0');
+
+    for (int d = 0; d < sizeof(segmentCodes) / sizeof(segmentCodes[0]); d++) {
+        if (segmentCodes[d].letter == new_n) return segmentCodes[d].code;
+    }
+
+    return segmentCodes[0].code;
+}
+
+// format number
+const char* Simple5641AS::formatNumber(int num) {
+    static char out[5];
+    char temp[6];
+    itoa(num, temp, 10);
+
+    int len = strlen(temp);
+    int pad = 4 - len;
+
+    for (int i = 0; i < pad; i++) out[i] = '?';
+    for (int i = 0; i < len; i++) out[pad + i] = temp[i];
+    
+    out[4] = '\0';
+    return out;
 }
 
 // Get number of decimals on a number. Max: 4
@@ -42,6 +67,20 @@ int Simple5641AS::decimalPlaces(float number) {
     }
 
     return counter - integerCounter;
+}
+
+// Get index of last leading zero
+int Simple5641AS::lastLeadingZeroIndex(const char* str) {
+    int index = -1;
+    int len = strlen(str);
+
+    for (int i = 0; i < len; i++) {
+        if (str[i] == '0') index = i;
+        else if (str[i] >= '0' && str[i] <= '9') break;
+        else break;
+    }
+
+    return index;
 }
 
 // All pins LOW -> all pins selected
@@ -68,49 +107,11 @@ void Simple5641AS::clean() {
     for (int i = 0; i < 8; i++) digitalWrite(_segmentPins[i], LOW);
 }
 
-// number -> segment code -> digitalWrite(HIGH or LOW) for each pin. dot not activated
-void Simple5641AS::shortDisplayNumber(int n) {
-    for (int i = 0; i < 7; i++) digitalWrite(_segmentPins[i], (segmentCodes[n] & ( 1 << (7 - i) )) >> (7 - i) ? HIGH : LOW);
-    digitalWrite(_segmentPins[7], LOW);
-}
-
-// number -> segment code ->  digitalWrite(HIGH or LOW) for each pin, dot included
-void Simple5641AS::shortDisplayNumber(int n, boolean dot) {
-    for (int i = 0; i < 7; i++) digitalWrite(_segmentPins[i], (segmentCodes[n] & ( 1 << (7 - i) )) >> (7 - i) ? HIGH : LOW);
-    digitalWrite(_segmentPins[7], dot ? HIGH : LOW);
-}
-
-// char -> segment code -> digitalWrite(HIGH or LOW) for each pin. dot not activated
-void Simple5641AS::shortDisplayLetter(char l) {
-    l = toupper(l);
-
-    for (int d = 0; d < sizeof(segmentCodesLetters) / sizeof(segmentCodesLetters[0]); d++) {
-        if (segmentCodesLetters[d].letter == l) {
-            for (int i = 0; i < 8; i++) digitalWrite(_segmentPins[i], (segmentCodesLetters[d].code & ( 1 << (7 - i) )) >> (7 - i) ? HIGH : LOW);
-            break;
-        }
-    }
-
-    digitalWrite(_segmentPins[7], LOW);
-}
-
-// char -> segment code -> digitalWrite(HIGH or LOW) for each pin, dot included
-void Simple5641AS::shortDisplayLetter(char l, boolean dot) {
-    l = toupper(l);
-
-    for (int d = 0; d < sizeof(segmentCodesLetters) / sizeof(segmentCodesLetters[0]); d++) {
-        if (segmentCodesLetters[d].letter == l) {
-            for (int i = 0; i < 8; i++) digitalWrite(_segmentPins[i], (segmentCodesLetters[d].code & ( 1 << (7 - i) )) >> (7 - i) ? HIGH : LOW);
-            break;
-        }
-    }
-
-    digitalWrite(_segmentPins[7], dot ? HIGH : LOW);
-}
-
 // segment code -> digitalWrite(HIGH or LOW) for each pin, dot not included (only if in code)
 void Simple5641AS::shortDisplayCode(uint8_t code) {
-    for (int i = 0; i < 8; i++) digitalWrite(_segmentPins[i], (code & ( 1 << (7 - i) )) >> (7 - i) ? HIGH : LOW);
+    for (int i = 0; i < 8; i++) {
+        digitalWrite(_segmentPins[i], (code & ( 1 << (7 - i) )) >> (7 - i) ? HIGH : LOW);
+    }
 }
 
 // segment code -> digitalWrite(HIGH or LOW) for each pin, dot included
@@ -121,54 +122,121 @@ void Simple5641AS::shortDisplayCode(uint8_t code, boolean dot) {
     for (int i = 0; i < 8; i++) digitalWrite(_segmentPins[i], (code & ( 1 << (7 - i) )) >> (7 - i) ? HIGH : LOW);
 }
 
+// number -> segment code -> digitalWrite(HIGH or LOW) for each pin. dot not activated
+void Simple5641AS::shortDisplayNumber(int n) {
+    uint8_t code = getCode(n);
+    shortDisplayCode(code);
+}
+
+// number -> segment code ->  digitalWrite(HIGH or LOW) for each pin, dot included
+void Simple5641AS::shortDisplayNumber(int n, boolean dot) {
+    uint8_t code = getCode(n);
+    shortDisplayCode(code, dot);
+}
+
+// char -> segment code -> digitalWrite(HIGH or LOW) for each pin. dot not activated
+void Simple5641AS::shortDisplayLetter(char c) {
+    uint8_t code = getCode(c);
+    shortDisplayCode(code);
+}
+
+// char -> segment code -> digitalWrite(HIGH or LOW) for each pin. dot not activated
+void Simple5641AS::shortDisplayLetter(char c, boolean dot) {
+    uint8_t code = getCode(c);
+    shortDisplayCode(code, dot);
+}
+
+// segment code -> digitalWrite(HIGH or LOW) for each pin, dot not included (only if in code)
+void Simple5641AS::shortDisplay(uint8_t code) {
+    shortDisplayCode(code);
+}
+
+// number -> segment code -> digitalWrite(HIGH or LOW) for each pin. dot not activated
+void Simple5641AS::shortDisplay(int n) {
+    shortDisplayNumber(n);
+}
+
+// number -> segment code -> digitalWrite(HIGH or LOW) for each pin. dot not activated
+void Simple5641AS::shortDisplay(char c) {
+    shortDisplayLetter(c);
+}
+
+// segment code -> digitalWrite(HIGH or LOW) for each pin, dot included (only if in code)
+void Simple5641AS::shortDisplay(uint8_t code, boolean dot) {
+    shortDisplayCode(code, dot);
+}
+
+// number -> segment code -> digitalWrite(HIGH or LOW) for each pin. dot activated
+void Simple5641AS::shortDisplay(int n, boolean dot) {
+    shortDisplayNumber(n, dot);
+}
+
+// number -> segment code -> digitalWrite(HIGH or LOW) for each pin. dot activated
+void Simple5641AS::shortDisplay(char c, boolean dot) {
+    shortDisplayLetter(c, dot);
+}
+
 // cycle function: display one number
-void Simple5641AS::cycleNumber(long digitDisplayTime, int number, int dot) {
-    number = cleanNumber(number);
-
+void Simple5641AS::cycle(long digitDisplayTime, int number) {
     clean();
     for (int i = 0; i < 4; i++) {
         selectDigit(i);
-        shortDisplayNumber((abs(number) / (int) pow(10, 3 - i)) % 10, dot == i);
+        shortDisplay((abs(number) / (int) pow(10, 3 - i)) % 10);
         delayMicroseconds(digitDisplayTime);
         clean();
     }
 }
 
-// cycle function: display one 4-word
-void Simple5641AS::cycleWord(long digitDisplayTime, char* word) {
-    word = cleanWord(word);
-
+// cycle function: display one number with dot
+void Simple5641AS::cycle(long digitDisplayTime, int number, int dot) {
     clean();
     for (int i = 0; i < 4; i++) {
         selectDigit(i);
-        shortDisplayLetter(word[i]);
+        shortDisplay((abs(number) / (int) pow(10, 3 - i)) % 10, dot == i);
         delayMicroseconds(digitDisplayTime);
         clean();
     }
 }
 
-// cycle function
+// cycle function: display char[]
 void Simple5641AS::cycle(long digitDisplayTime, char* word) {
-    word = cleanWord(word);
-
     clean();
     for (int i = 0; i < 4; i++) {
         selectDigit(i);
-
-        if (isdigit(word[i])) shortDisplayNumber(word[i] - '0'); // char to int
-        else shortDisplayLetter(word[i]);
-
+        shortDisplay(word[i]);
         delayMicroseconds(digitDisplayTime);
         clean();
     }
 }
 
-// customDisplayCycle function: display 4 symbols represented by 4 codes
-void Simple5641AS::customDisplayCycle(long digitDisplayTime, uint8_t codes[4]) {
+// cycle function: display char[] with dot
+void Simple5641AS::cycle(long digitDisplayTime, char* word, int dot) {
     clean();
     for (int i = 0; i < 4; i++) {
         selectDigit(i);
-        shortDisplayCode(codes[i]);
+        shortDisplay(word[i], dot == i);
+        delayMicroseconds(digitDisplayTime);
+        clean();
+    }
+}
+
+// cycle function: display custom codes
+void Simple5641AS::cycle(long digitDisplayTime, uint8_t codes[4]) {
+    clean();
+    for (int i = 0; i < 4; i++) {
+        selectDigit(i);
+        shortDisplay(codes[i]);
+        delayMicroseconds(digitDisplayTime);
+        clean();
+    }
+}
+
+// cycle function: display custom codes with dot
+void Simple5641AS::cycle(long digitDisplayTime, uint8_t codes[4], int dot) {
+    clean();
+    for (int i = 0; i < 4; i++) {
+        selectDigit(i);
+        shortDisplay(codes[i], dot == i);
         delayMicroseconds(digitDisplayTime);
         clean();
     }
@@ -197,112 +265,47 @@ void Simple5641AS::zeroAnimation() {
     zeroAnimation(155, 100 * 16);
 }
 
-// Display number as negative MAXIMUM 3-DIGITS
-void Simple5641AS::displayNegativeNumber(long cycles, long cycleDelay, long digitDisplayTime, int number, int dot) {
-    number = abs(number) % 1000;
-
+// ########################## CODES ##########################
+// Display codes
+void Simple5641AS::Display(long cyclesAmount, long cycleDelay, long digitDisplayTime, uint8_t codes[4], int dot) {
     long cycleIterator = 0L;
-    while (cycleIterator < cycles) {
+    while (cycleIterator < cyclesAmount) {
         clean();
         for (int i = 0; i < 4; i++) {
-            int prev_digit = (i != 0) ? (number / (int) pow(10, 3 - (i - 1))) % 10 : 0;
-            int digit = (number / (int) pow(10, 3 - i)) % 10;
-            int next_digit = (i != 3) ? (number / (int) pow(10, 3 - (i + 1))) % 10 : 0;
-            
             selectDigit(i);
-
-            if (prev_digit == 0 && digit == 0 && next_digit != 0) shortDisplayCode(minusCode, dot == i);
-            else shortDisplayCode(segmentCodes[digit], dot == i);
-
+            shortDisplay(codes[i], dot == i);
             delayMicroseconds(digitDisplayTime);
             clean();
         }
-            
         delayMicroseconds(cycleDelay);
         cycleIterator++;
     }
 }
 
-// displayPositiveNumber function, with all parameters available
-void Simple5641AS::displayNumber(long cycles, long cycleDelay, long digitDisplayTime, int number, int dot) {
-    number = cleanNumber(number);
-
-    long cycleIterator = 0L;
-    while (cycleIterator < cycles) {
-        clean();
-        for (int i = 0; i < 4; i++) {
-            selectDigit(i);
-            shortDisplayNumber((number / (int) pow(10, 3 - i)) % 10, dot == i);
-            delayMicroseconds(digitDisplayTime);
-            clean();
-        }
-            
-        delayMicroseconds(cycleDelay);
-        cycleIterator++;
-    }
+// Display codes
+void Simple5641AS::Display(long cyclesAmount, long cycleDelay, long digitDisplayTime, uint8_t codes[4]) {
+    Display(cyclesAmount, cycleDelay, digitDisplayTime, codes, 5);
 }
 
-// displayNumber function, with all parameters available
-void Simple5641AS::Display(long cycles, long cycleDelay, long digitDisplayTime, int number, int dot) {
-    if (number > 0) displayNumber(cycles, cycleDelay, digitDisplayTime, number, dot);
-    else displayNegativeNumber(cycles, cycleDelay, digitDisplayTime, number, dot);
-}
-
-void Simple5641AS::Display(long cycles, long cycleDelay, long digitDisplayTime, int number) {
-    Display(cycles, cycleDelay, digitDisplayTime, number, 5);
-}
-
-// display a number for a number of seconds, and indicate where is the dot placed
-void Simple5641AS::Display(int seconds, int number, int dot) {
-    Display(seconds * 690L, 400, 155, number, dot);
-}
-
-// display a integer number for a number of seconds, without any dots visible
-void Simple5641AS::Display(int seconds, int number) {
-    Display(seconds * 690L, 400, 155, number, 5);
-}
-
-// display a float number, the dot is put accordingly
-void Simple5641AS::Display(int seconds, float number) {
-    number = (float)((long)(number * 1000.0)) / 1000.0;
-    int decimals = decimalPlaces(number);
-    float modifiedNumber = number;
-    for (int i = 0; i < decimals; i++) modifiedNumber *= 10;
-    Display(seconds * 690L, 400, 155, (int)modifiedNumber, decimals == 0 ? 5 : 3 - decimals);
-}
-
-// displayCode function, with all parameters available
-void Simple5641AS::Display(long cycles, long cycleDelay, long digitDisplayTime, uint8_t codes[4], int dot) {
-    long cycleIterator = 0L;
-    while (cycleIterator < cycles) {
-        clean();
-        for (int i = 0; i < 4; i++) {
-            selectDigit(i);
-            shortDisplayCode(codes[i]);
-            delayMicroseconds(digitDisplayTime);
-            clean();
-        }
-        cycleIterator++;
-    }
-}
-
-// displayCode function, with 3 parameters available
+// Display codes
 void Simple5641AS::Display(int seconds, uint8_t codes[4], int dot) {
     Display(seconds * 690L, 400, 155, codes, dot);
 }
 
-// display word with all functionality
-void Simple5641AS::Display(long cycles, long cycleDelay, long digitDisplayTime, char* word, int dot) {
-    word = cleanWord(word);
+// Display codes
+void Simple5641AS::Display(int seconds, uint8_t codes[4]) {
+    Display(seconds * 690L, 400, 155, codes, 5);
+}
+
+// ########################## WORDS ##########################
+// Display words
+void Simple5641AS::Display(long cyclesAmount, long cycleDelay, long digitDisplayTime, char* word, int dot) {
     long cycleIterator = 0L;
-    while (cycleIterator < cycles) {
+    while (cycleIterator < cyclesAmount) {
         clean();
         for (int i = 0; i < 4; i++) {
             selectDigit(i);
-
-            if (isdigit(word[i])) shortDisplayNumber(word[i] - '0', dot == i); // char to int
-            else shortDisplayLetter(word[i], dot == i);
-            
+            shortDisplay(word[i], dot == i);
             delayMicroseconds(digitDisplayTime);
             clean();
         }
@@ -312,13 +315,39 @@ void Simple5641AS::Display(long cycles, long cycleDelay, long digitDisplayTime, 
     }
 }
 
-// display a word for a number of seconds, and indicate where is the dot placed
+// Display words
+void Simple5641AS::Display(long cyclesAmount, long cycleDelay, long digitDisplayTime, char* word) {
+    Display(cyclesAmount, cycleDelay, digitDisplayTime, word, 5);
+}
+
+// Display words
 void Simple5641AS::Display(int seconds, char* word, int dot) {
     Display(seconds * 690L, 400, 155, word, dot);
 }
 
-// display a word number for a number of seconds, without any dots visible
+// Display words
 void Simple5641AS::Display(int seconds, char* word) {
     Display(seconds * 690L, 400, 155, word, 5);
 }
 
+// ########################## WORDS ##########################
+// Display numbers (negative numbers only up to 3 digits, 1 last digit is minus)
+void Simple5641AS::Display(long cyclesAmount, long cycleDelay, long digitDisplayTime, int n, int dot) {
+    char* formatted = formatNumber(n);
+    Display(cyclesAmount, cycleDelay, digitDisplayTime, formatted, dot);
+}
+
+// Display numbers (negative numbers only up to 3 digits, 1 last digit is minus)
+void Simple5641AS::Display(long cyclesAmount, long cycleDelay, long digitDisplayTime, int n) {
+    Display(cyclesAmount, cycleDelay, digitDisplayTime, n, 5);
+}
+
+// Display numbers (negative numbers only up to 3 digits, 1 last digit is minus)
+void Simple5641AS::Display(int seconds, int n, int dot) {
+    Display(seconds * 690L, 400, 155, n, dot);
+}
+
+// Display numbers (negative numbers only up to 3 digits, 1 last digit is minus)
+void Simple5641AS::Display(int seconds, int n) {
+    Display(seconds * 690L, 400, 155, n, 5);
+}
