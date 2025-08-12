@@ -1,7 +1,7 @@
 #include <Simple5641AS.h>
 
-const uint8_t segmentPins[] = { 6, 7, 8, 9, 10, 11, 12, 13 };
-const uint8_t digitSelectionPins[] = { 2, 3, 4, 5 };
+const uint8_t segmentPins[] = { 8, 9, 10, 11, 12, 13, A0, A1 };
+const uint8_t digitSelectionPins[] = { 4, 5, 6, 7 };
 Simple5641AS component( segmentPins, digitSelectionPins );
 
 void setup() {
@@ -27,7 +27,7 @@ void loop() {
   }
 
   Serial.println("Display Numbers:");
-  for (int i = 0; i < 1001; i++) {
+  for (int i = -500; i < 501; i++) {
     component.Display(7, 5, 5, i);
   }
 
