@@ -103,52 +103,65 @@ Simple5641AS component( segmentPins, digitSelectionPins );
 ## Functions
 ```c++
     // constructor
-    Simple5641AS(const uint8_t * segmentPins, const uint8_t * digitSelectionPins);
+    Simple5641AS(const uint8_t* segmentPins, const uint8_t* digitSelectionPins);
     
-    // digit selection functions
+    // Digit selection
     void selectAllDigits();
     void selectDigit(int digit);
     
-    // clean function
+    // Clean command
     void clean();
-    
-    // brief display functions
-    void shortDisplayNumber(int n);
-    void shortDisplayNumber(int n, boolean dot);
 
-    void shortDisplayLetter(char l);
-    void shortDisplayLetter(char l, boolean dot);
-
+    // Base output
     void shortDisplayCode(uint8_t code);
     void shortDisplayCode(uint8_t code, boolean dot);
     
-    // cycle functions
-    void cycleNumber(long digitDisplayTime, int number, int dot);
-    void cycleWord(long digitDisplayTime, char* word);
+    void shortDisplayNumber(int n);
+    void shortDisplayNumber(int n, boolean dot);
+
+    void shortDisplayLetter(char c);
+    void shortDisplayLetter(char c, boolean dot);
+
+    // Simplified display
+    void shortDisplay(uint8_t code);
+    void shortDisplay(uint8_t code, boolean dot);
+
+    void shortDisplay(int n);
+    void shortDisplay(int n, boolean dot);
+
+    void shortDisplay(char c);
+    void shortDisplay(char c, boolean dot);
+
+    // Cycles
+    void cycle(long digitDisplayTime, uint8_t codes[4]);
+    void cycle(long digitDisplayTime, uint8_t codes[4], int dot);
+
+    void cycle(long digitDisplayTime, int number);
+    void cycle(long digitDisplayTime, int number, int dot);
+
     void cycle(long digitDisplayTime, char* word);
-    void customDisplayCycle(long digitDisplayTime, uint8_t codes[4]);
-    
-    // zeroAnimation functions
+    void cycle(long digitDisplayTime, char* word, int dot);
+
+    // Animations
     void zeroAnimation(long cycleDelay, long cycles);
     void zeroAnimation();
-    
-    // Only displaying numbers
-    void displayNegativeNumber(long cycles, long cycleDelay, long digitDisplayTime, int number, int dot);
-    void displayNumber(long cycles, long cycleDelay, long digitDisplayTime, int number, int dot);
 
-    // Displating numbers
-    void Display(long cycles, long cycleDelay, long digitDisplayTime, int number, int dot);
-    void Display(long cycles, long cycleDelay, long digitDisplayTime, int number);
-    void Display(int seconds, int number, int dot);
-    void Display(int seconds, int number);
-    void Display(int seconds, float number);
-
-    // Displating codes
-    void Display(long cycles, long cycleDelay, long digitDisplayTime, uint8_t codes[4], int dot);
+    // Display
+    // ########################## CODES ##########################
+    void Display(long cyclesAmount, long cycleDelay, long digitDisplayTime, uint8_t codes[4], int dot);
+    void Display(long cyclesAmount, long cycleDelay, long digitDisplayTime, uint8_t codes[4]);
     void Display(int seconds, uint8_t codes[4], int dot);
+    void Display(int seconds, uint8_t codes[4]);
 
-    // Displating words
-    void Display(long cycles, long cycleDelay, long digitDisplayTime, char* word, int dot);
+    // ########################## WORDS ##########################
+    void Display(long cyclesAmount, long cycleDelay, long digitDisplayTime, char* word, int dot);
+    void Display(long cyclesAmount, long cycleDelay, long digitDisplayTime, char* word);
     void Display(int seconds, char* word, int dot);
     void Display(int seconds, char* word);
+
+    // ########################## NUMBERS ##########################
+    void Display(long cyclesAmount, long cycleDelay, long digitDisplayTime, int n, int dot);
+    void Display(long cyclesAmount, long cycleDelay, long digitDisplayTime, int n);
+    void Display(int seconds, int n, int dot);
+    void Display(int seconds, int n);
 ```
