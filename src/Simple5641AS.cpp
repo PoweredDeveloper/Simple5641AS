@@ -248,6 +248,10 @@ void Simple5641AS::Display(long cycles, long cycleDelay, long digitDisplayTime, 
     else displayNegativeNumber(cycles, cycleDelay, digitDisplayTime, number, dot);
 }
 
+void Simple5641AS::Display(long cycles, long cycleDelay, long digitDisplayTime, int number) {
+    Display(cycles, cycleDelay, digitDisplayTime, number, 5);
+}
+
 // display a number for a number of seconds, and indicate where is the dot placed
 void Simple5641AS::Display(int seconds, int number, int dot) {
     Display(seconds * 690L, 400, 155, number, dot);

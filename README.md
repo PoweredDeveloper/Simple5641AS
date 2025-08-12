@@ -138,6 +138,7 @@ Simple5641AS component( segmentPins, digitSelectionPins );
 
     // Displating numbers
     void Display(long cycles, long cycleDelay, long digitDisplayTime, int number, int dot);
+    void Display(long cycles, long cycleDelay, long digitDisplayTime, int number);
     void Display(int seconds, int number, int dot);
     void Display(int seconds, int number);
     void Display(int seconds, float number);
