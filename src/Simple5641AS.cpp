@@ -330,7 +330,7 @@ void Simple5641AS::Display(int seconds, char* word) {
     Display(seconds * 690L, 400, 155, word, 5);
 }
 
-// ########################## WORDS ##########################
+// ########################## NUMBERS ##########################
 // Display numbers (negative numbers only up to 3 digits, 1 last digit is minus)
 void Simple5641AS::Display(long cyclesAmount, long cycleDelay, long digitDisplayTime, int n, int dot) {
     char* formatted = formatNumber(n);
